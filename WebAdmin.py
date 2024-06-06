@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
 from urllib.parse import urlparse, unquote
 
-# Port/Username/password for basic authentication
+# Port/Username/password for basic web authentication
 webserverport = 80
 USERNAME = "admin"
 PASSWORD = "123456"
