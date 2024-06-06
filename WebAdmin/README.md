@@ -16,6 +16,7 @@
     open browser 
     enter server ip
     have fun
+![image](https://github.com/JTNeXuS2/SoulMask.Tools/assets/88918931/2ac98498-6025-4d34-9d11-bcac34fb5b17)
 
 
 
