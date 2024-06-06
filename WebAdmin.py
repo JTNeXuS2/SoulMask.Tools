@@ -5,7 +5,7 @@ import urllib.parse
 from urllib.parse import urlparse, unquote
 
 # Port/Username/password for basic authentication
-webserverport = 8080
+webserverport = 80
 USERNAME = "admin"
 PASSWORD = "123456"
 #buttons ports/names for connect to 127.0.0.1, add more if u have more servers
