@@ -4,7 +4,7 @@
     put the files on the same machine where the server is running
     Edit via notepad(++) WebAdmin.py
     fill params
-        webserverport = 8080
+        webserverport = 80
         USERNAME = "admin"
         PASSWORD = "123456"
         <button onclick=\"sendCommand(20779)\">Server 1</button>
@@ -12,3 +12,7 @@
 ### Start
     run via !Start.cmd
     
+### Connect
+    open browser 
+    enter server ip
+    have fun
