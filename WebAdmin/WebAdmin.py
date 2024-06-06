@@ -8,7 +8,7 @@ from urllib.parse import urlparse, unquote
 webserverport = 80
 USERNAME = "admin"
 PASSWORD = "123456"
-#buttons ports/names for connect to 127.0.0.1, add more if u have more servers
+#buttons EchoPorts/names for connect to 127.0.0.1, add more if u have more servers
 button_ports = '''
     <button onclick=\"sendCommand(20779)\">Send PVE</button>
     <button onclick=\"sendCommand(20712)\">Send PVP</button>
