@@ -21,7 +21,13 @@ commands_list = '''
     <option value='saveworld'>SaveWorld</option>
     <option value='GetAll WS.HPlayerState PlayerName'>Online players Names</option>
     <option value='GetAll WS.HPlayerState UniqueId'>Online players SteamID</option>
+    <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
+    <option value='GetAll WS.HPlayerState TotalKeJiPoints'>Online players TotalKeJiPoints</option>
+    <option value='GetAll WS.HPlayerState Exp'>Online players Exp</option>
+    <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
+    <option value='GetAll BP_GameModeBase_C ServerManagerPassword'>Get Admin Password</option>
 '''
+
 
 #not change any more
 html = f"""<html>
