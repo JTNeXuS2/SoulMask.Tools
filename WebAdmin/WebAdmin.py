@@ -31,6 +31,34 @@ commands_list = '''
 
 #not change any more
 html = f"""<html>
+                <head>
+                    <style>
+                        table {{
+                            font-family: Arial, sans-serif;
+                            border-collapse: collapse;
+                            width: 100%;
+                        }}
+
+                        table td, table th {{
+                            border: 1px solid #dddddd;
+                            text-align: left;
+                            padding: 8px;
+                        }}
+
+                        table th {{
+                            background-color: #f2f2f2;
+                        }}
+
+                        button {{
+                            margin-top: 10px;
+                            padding: 10px 20px;
+                            background-color: #4CAF50;
+                            color: white;
+                            border: none;
+                            cursor: pointer;
+                        }}
+                    </style>
+                </head>
                 <body>
                     <div>
                         <label for='command'>Enter command:</label>
