@@ -1,6 +1,3 @@
-import disnake
-from disnake.ext import commands
-from disnake import Intents
 import json
 import configparser
 import unicodedata
