@@ -115,7 +115,7 @@ async def update_status():
             if message:
                 await message.edit(content=f'Last update: {datetime.datetime.now().strftime("%H:%M")}', embed=addition_embed)
         except Exception as e:
-            print(f'Failed to fetch channel, message or server data. Maybe try /sendhere\n {e}')
+            print(f'Failed to fetch channel, message or server data. Maybe try /{command_prefex}_sendhere\n {e}')
     await upd_msg()
 
 @bot.event
