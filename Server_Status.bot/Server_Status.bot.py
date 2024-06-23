@@ -7,7 +7,6 @@ import json
 import datetime
 import a2s
 import requests
-
 import configparser
 import re
 import unicodedata
@@ -35,7 +34,7 @@ async def write_cfg(section, key, value):
     with open('config.ini', 'w', encoding='utf-8') as configfile:
         config.write(configfile)
 def update_settings():
-    global token, channel_id, message_id , update_time, bot_name, bot_ava, address
+    global token, channel_id, message_id , update_time, bot_name, bot_ava, address, command_prefex
 
     config = read_cfg()
 
@@ -47,6 +46,7 @@ def update_settings():
             bot_name = config['botconfig']['bot_name']
             bot_ava = config['botconfig']['bot_ava']
             update_time = config['botconfig']['update_time']
+            command_prefex = config['botconfig']['command_prefex'].lower()
             address = (f"{config['botconfig']['ip']}", int(config['botconfig']['query_port']))
         except KeyError as e:
             print(f"Error: wrong lines in config file {e}")
@@ -58,6 +58,7 @@ bot_name = None
 bot_ava = None
 update_time = 5
 address = None
+command_prefex = None
 update_settings()
 
 #bot idents
@@ -151,7 +152,7 @@ async def help(ctx):
 '''
 
 #commands
-@bot.slash_command(description="Set this channel to announce")
+@bot.slash_command(name=f'{command_prefex}_sendhere', description="Set this channel to announce")
 async def sendhere(ctx: disnake.ApplicationCommandInteraction):
     if ctx.author.guild_permissions.administrator:
         try:
@@ -174,8 +175,8 @@ async def sendhere(ctx: disnake.ApplicationCommandInteraction):
 
 
 
-@bot.slash_command(description="Request Servers status")
-async def server_status(ctx):
+@bot.slash_command(name=f'{command_prefex}_status', description="Request Servers status")
+async def status(ctx):
     info, players, rules = await get_info()
     message = (
 	f":earth_africa:Direct Link: **{address[0]}:{info.port}**\n"
@@ -198,8 +199,8 @@ async def server_status(ctx):
         await ctx.response.send_message(f'❌ Please try again later. \nError:\n{e}', ephemeral=True)
         print(f'Error occurred during sending message: {e}')
 
-@bot.slash_command(description="Request Players status")
-async def server_players(ctx):
+@bot.slash_command(name=f'{command_prefex}_players', description="Request Players status")
+async def players(ctx):
     info, players, rules = await get_info()
     lists = []
     print(f'\n=== Players List ===')
