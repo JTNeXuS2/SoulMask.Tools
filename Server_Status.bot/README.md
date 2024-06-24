@@ -22,6 +22,13 @@ invate your bot to discord (open link in browser)
 enter /commandprefex_sendhere (default in config /pve_sendhere) in channel
 
 ### have fun!
+    screenshots
+![image](https://github.com/JTNeXuS2/SoulMask.Tools/assets/88918931/f104d155-8f9b-4194-858f-1fb3bc412d9c)
+![image](https://github.com/JTNeXuS2/SoulMask.Tools/assets/88918931/7c28d40b-87fa-4fd6-b864-25c9134653fc)
+![image](https://github.com/JTNeXuS2/SoulMask.Tools/assets/88918931/fed61dd9-c627-4979-8f76-2d8f66305d06)
+![image](https://github.com/JTNeXuS2/SoulMask.Tools/assets/88918931/2ad7ed0f-cae3-4ce5-b806-78ef62b3b876)
+
+
 
 
 
