@@ -57,7 +57,7 @@ channel_id = None
 message_id = None
 bot_name = None
 bot_ava = None
-update_time = 5
+update_time = 10
 address = None
 command_prefex = None
 update_settings()
@@ -68,7 +68,7 @@ intents = disnake.Intents().all()
 client = commands.Bot(command_prefix=prefix, intents=intents, case_insensitive=True)
 bot = commands.Bot(command_prefix=prefix, intents=intents, case_insensitive=True)
 
-async def get_info():
+async def get_info(address):
     try:
         info = a2s.info(address)
         players = a2s.players(address)
@@ -89,7 +89,7 @@ async def get_info():
 @tasks.loop(seconds=int(update_time))
 async def update_status():
     try:
-        info, players, rules = await get_info()
+        info, players, rules = await get_info(address)
         player_count = len(players)
         max_players = info.max_players
         activity = disnake.Game(name=f"Online:{player_count}/{max_players}")
@@ -191,19 +191,22 @@ async def sendhere(ctx: disnake.ApplicationCommandInteraction):
 
 
 @bot.slash_command(name=f'{command_prefex}_status', description="Request Servers status")
-async def status(ctx):
+async def status(ctx: disnake.ApplicationCommandInteraction, server_ip: str = None, query_port: int = None):
+    if server_ip is None:
+        server_ip = address[0]
     try:
-        info, players, rules = await get_info()
-
+        if server_ip is not None and query_port is not None:
+            info, players, rules = await get_info((f"{server_ip}", int(query_port)))
+        else:
+            info, players, rules = await get_info(address)
         message = (
-            f":earth_africa: Direct Link: **{info.ip_address}:{info.port}**\n"
+            f":earth_africa: Direct Link: **{server_ip}:{info.port}**\n"
             f":link: Invite: **{rules.get('SU_s', 'N/A')}**\n"
             f":map: Map: **{info.map_name}**\n"
             f":green_circle: Online: **{info.player_count}/{info.max_players}**\n"
             f":asterisk: Pass: **{info.password_protected}**\n"
             f":newspaper: Ver: **{rules.get('NO_s', 'N/A')}**\n"
         )
-
         addition_embed = disnake.Embed(
             title=f"**{info.server_name}**",
             colour=disnake.Colour.green()
@@ -221,8 +224,18 @@ async def status(ctx):
         print(f'Error occurred during fetching server info: {e}')
 
 @bot.slash_command(name=f'{command_prefex}_players', description="Request Players status")
-async def players(ctx):
-    info, players, rules = await get_info()
+async def players(ctx: disnake.ApplicationCommandInteraction, server_ip: str = None, query_port: int = None):
+    if server_ip is None:
+        server_ip = address[0]
+    try:
+        if server_ip is not None and query_port is not None:
+            info, players, rules = await get_info((f"{server_ip}", int(query_port)))
+        else:
+            info, players, rules = await get_info(address)
+    except Exception as e:
+        await ctx.response.send_message(content='❌ An error occurred. Please try again later.', ephemeral=True)
+        print(f'Error occurred during fetching server info: {e}')
+
     lists = []
     print(f'\n=== Players List ===')
     for i, player in enumerate(players):
