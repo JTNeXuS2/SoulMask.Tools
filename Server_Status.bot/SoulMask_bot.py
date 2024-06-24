@@ -191,16 +191,16 @@ async def sendhere(ctx: disnake.ApplicationCommandInteraction):
 
 
 @bot.slash_command(name=f'{command_prefex}_status', description="Request Servers status")
-async def status(ctx: disnake.ApplicationCommandInteraction, server_ip: str = None, query_port: int = None):
-    if server_ip is None:
-        server_ip = address[0]
+async def status(ctx: disnake.ApplicationCommandInteraction, ip: str = None, query: int = None):
+    if ip is None:
+        ip = address[0]
     try:
-        if server_ip is not None and query_port is not None:
-            info, players, rules = await get_info((f"{server_ip}", int(query_port)))
+        if ip is not None and query is not None:
+            info, players, rules = await get_info((f"{ip}", int(query)))
         else:
             info, players, rules = await get_info(address)
         message = (
-            f":earth_africa: Direct Link: **{server_ip}:{info.port}**\n"
+            f":earth_africa: Direct Link: **{ip}:{info.port}**\n"
             f":link: Invite: **{rules.get('SU_s', 'N/A')}**\n"
             f":map: Map: **{info.map_name}**\n"
             f":green_circle: Online: **{info.player_count}/{info.max_players}**\n"
@@ -224,12 +224,12 @@ async def status(ctx: disnake.ApplicationCommandInteraction, server_ip: str = No
         print(f'Error occurred during fetching server info: {e}')
 
 @bot.slash_command(name=f'{command_prefex}_players', description="Request Players status")
-async def players(ctx: disnake.ApplicationCommandInteraction, server_ip: str = None, query_port: int = None):
-    if server_ip is None:
-        server_ip = address[0]
+async def players(ctx: disnake.ApplicationCommandInteraction, ip: str = None, query: int = None):
+    if ip is None:
+        ip = address[0]
     try:
-        if server_ip is not None and query_port is not None:
-            info, players, rules = await get_info((f"{server_ip}", int(query_port)))
+        if ip is not None and query is not None:
+            info, players, rules = await get_info((f"{ip}", int(query)))
         else:
             info, players, rules = await get_info(address)
     except Exception as e:
