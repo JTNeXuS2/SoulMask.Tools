@@ -7,7 +7,7 @@
     https://discord.com/developers/applications/
 and get token
 ![image](https://github.com/JTNeXuS2/SoulMask.Tools/assets/88918931/1bbc7362-5a92-47c5-a314-d41ec9b4fd36)
-enable intens
+enable intents
 ![image](https://github.com/JTNeXuS2/SoulMask.Tools/assets/88918931/7b8b7f40-3129-4d96-bfe6-b0bea1d80422)
 #### Fill Config.ini
       token = secret_token
