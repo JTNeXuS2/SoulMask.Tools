@@ -13,17 +13,29 @@ button_ports = '''
     <button onclick=\"sendCommand(20779)\">Send PVE</button>
     <button onclick=\"sendCommand(20712)\">Send PVP</button>
 '''
-#commanda and names
+#commands and names
 commands_list = '''
     <option value='help'>Help</option>
     <option value='log'>Log</option>
     <option value='dpp'>Get All players</option>
-    <option value='saveworld'>SaveWorld</option>
+    <option value='saveworld 0'>Fast Save, only actors</option>
+    <option value='BackupDatabase world'>Force Save World to disk</option>
+    <option value='shutdown 30'>Shutdown after 30 seconds, use SaveWorld before</option>
+    <option value='StopCloseServer'>Stop Shutdown</option>
+
+    <option value='QueryInvitationCode'>Get Invitation Code</option>
+    <option value='ServerFPS'>Get Server FPS</option>
+    <option value='ServerLoginStatus 0'>logging status: Openned</option>
+    <option value='ServerLoginStatus 1'>logging status: Close</option>
+    <option value='DrawActorImage 0'>Dump the position of the specified type of Actor in the game to the image file: Saved/ACTOR_IMAGE_*.bmp </option>
+    <option value='Dump_AllActorPositions'>Export the positions of various Actors in the game to the file: Saved/ACTOR_POSI_DATA.log</option>
+
     <option value='GetAll WS.HPlayerState PlayerName'>Online players Names</option>
     <option value='GetAll WS.HPlayerState UniqueId'>Online players SteamID</option>
     <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
     <option value='GetAll WS.HPlayerState TotalKeJiPoints'>Online players TotalKeJiPoints</option>
     <option value='GetAll WS.HPlayerState Exp'>Online players Exp</option>
+    <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
     <option value='GetAll BP_GameModeBase_C ServerManagerPassword'>Get Admin Password</option>
 '''
 
