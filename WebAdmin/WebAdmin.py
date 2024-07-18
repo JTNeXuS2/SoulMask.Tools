@@ -146,7 +146,9 @@ class WebHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
-
+            if response is None:
+                self.wfile.write(f"server did not return anything\n".encode())
+                return
             for line in response:
                 self.wfile.write(f"{line}\n".encode())
 
