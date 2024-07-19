@@ -3,6 +3,7 @@ import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
 from urllib.parse import urlparse, unquote
+import os
 
 # Port/Username/password for basic web authentication
 webserverport = 80
@@ -12,6 +13,7 @@ PASSWORD = "123456"
 button_ports = '''
     <button onclick=\"sendCommand(20779)\">Send PVE</button>
     <button onclick=\"sendCommand(20712)\">Send PVP</button>
+    <button style="background-color: #303090;" onclick="window.open('/files_list?base_path=C:/wgsm/servers/2/serverfiles/WS/Saved')">Files PVPX5</button>
 '''
 #commands and names
 commands_list = '''
@@ -38,7 +40,6 @@ commands_list = '''
     <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
     <option value='GetAll BP_GameModeBase_C ServerManagerPassword'>Get Admin Password</option>
 '''
-
 
 #not change any more
 html = f"""<html>
@@ -86,6 +87,7 @@ html = f"""<html>
                         <pre id='response'></pre>
                     </div>
                     <script>
+
                         function updateCommandField() {{
                             var selectedCommand = document.getElementById('commandSelect').value;
                             document.getElementById('command').value = selectedCommand;
@@ -103,6 +105,8 @@ html = f"""<html>
                     </script>
                 </body>
             </html>""".encode()
+import os
+
 class WebHandler(BaseHTTPRequestHandler):
 
     def send_telnet_command(self, port, command):
@@ -152,6 +156,66 @@ class WebHandler(BaseHTTPRequestHandler):
             for line in response:
                 self.wfile.write(f"{line}\n".encode())
 
+            return
+
+        elif parsed_path.path.startswith('/files_list'):
+            if not self.check_auth():
+                self.send_auth_headers()
+                return
+
+            query_params = urllib.parse.parse_qs(parsed_path.query)
+            directory_name = query_params.get('directory', [''])[0]
+            base_path = query_params.get('base_path', [''])[0]
+            directory_path = base_path#os.path.join(base_path, directory_name)
+
+            if os.path.isdir(directory_path):
+                files = os.listdir(directory_path)
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+
+                # Generate HTML for the list of files in the directory with correct download links
+                files_html = '<h1>Files in Directory:</h1><ul>'
+                for file in files:
+                    file_path = os.path.join(directory_path, file)
+                    if os.path.isfile(file_path):
+                        file_link = f'<a href="/download?base_path={base_path}&file={file}" download>{file}</a>'
+                        files_html += f'<li>{file_link}</li>'
+                files_html += '</ul>'
+
+                self.wfile.write(files_html.encode())
+            else:
+                self.send_response(404)
+                self.send_header('Content-Type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(b'Directory not found')
+            return
+
+            
+        elif parsed_path.path == '/download':
+            if not self.check_auth():
+                self.send_auth_headers()
+                return
+
+            query_params = urllib.parse.parse_qs(parsed_path.query)
+            file_name = query_params.get('file', [''])[0]
+            base_path = query_params.get('base_path', [''])[0]
+            file_path = os.path.join(base_path, file_name)
+
+            if os.path.exists(file_path):
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Content-Disposition', f'attachment; filename="{file_name}"')
+                self.end_headers()
+
+                with open(file_path, 'rb') as file:
+                    self.wfile.write(file.read())
+            else:
+                self.send_response(404)
+                self.send_header('Content-Type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(b'File not found')
             return
 
     def check_auth(self):
