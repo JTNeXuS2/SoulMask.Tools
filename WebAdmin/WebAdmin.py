@@ -176,7 +176,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 self.end_headers()
 
                 # Generate HTML for the list of files in the directory with correct download links
-                files_html = '<h1>Files in Directory:</h1><ul>'
+                files_html = f'<h1>Files in Directory: {base_path}</h1><ul>'
                 for file in files:
                     file_path = os.path.join(directory_path, file)
                     if os.path.isfile(file_path):
