@@ -13,7 +13,7 @@ PASSWORD = "123456"
 button_ports = '''
     <button onclick=\"sendCommand(20779)\">Send PVE</button>
     <button onclick=\"sendCommand(20712)\">Send PVP</button>
-    <button style="background-color: #303090;" onclick="window.open('/files_list?base_path=C:/wgsm/servers/2/serverfiles/WS/Saved')">Files PVPX5</button>
+    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/2/serverfiles/WS/Saved')\">Files PVPX5</button>
 '''
 #commands and names
 commands_list = '''
@@ -84,6 +84,7 @@ html = f"""<html>
                         {button_ports}
                     </p>
                     <div>
+                        <pre id='file_list'></pre>
                         <pre id='response'></pre>
                     </div>
                     <script>
@@ -100,8 +101,20 @@ html = f"""<html>
                                 var formattedText = '';
                                 lines.forEach(line => formattedText += line + '\\n');
                                 document.getElementById('response').innerText = formattedText;
+                                document.getElementById('file_list').innerText = '';
                             }});
                         }}
+                        
+                        function sendbase_path(base_path) {{
+                            fetch('/files_list?base_path=' + base_path).then(response => response.text()).then(data => {{
+                                var lines = data.split('\\n');
+                                var formattedText = '';
+                                lines.forEach(line => formattedText += line + '\\n');
+                                document.getElementById('response').innerText = '';
+                                document.getElementById('file_list').innerHTML = formattedText;
+                            }});
+                        }}
+                        
                     </script>
                 </body>
             </html>""".encode()
@@ -166,10 +179,8 @@ class WebHandler(BaseHTTPRequestHandler):
             query_params = urllib.parse.parse_qs(parsed_path.query)
             directory_name = query_params.get('directory', [''])[0]
             base_path = query_params.get('base_path', [''])[0]
-            directory_path = base_path#os.path.join(base_path, directory_name)
-
-            if os.path.isdir(directory_path):
-                files = os.listdir(directory_path)
+            if os.path.isdir(base_path):
+                files = os.listdir(base_path)
 
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
@@ -178,7 +189,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 # Generate HTML for the list of files in the directory with correct download links
                 files_html = f'<h1>Files in Directory: {base_path}</h1><ul>'
                 for file in files:
-                    file_path = os.path.join(directory_path, file)
+                    file_path = os.path.join(base_path, file)
                     if os.path.isfile(file_path):
                         file_link = f'<a href="/download?base_path={base_path}&file={file}" download>{file}</a>'
                         files_html += f'<li>{file_link}</li>'
@@ -239,5 +250,7 @@ def run(server_class=HTTPServer, handler_class=WebHandler, port=webserverport):
     print(f"Starting HTTP server on port {port}")
     httpd.serve_forever()
 
+if __name__ == '__main__':
+    run()
 if __name__ == '__main__':
     run()
