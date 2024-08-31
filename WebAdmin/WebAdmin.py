@@ -17,21 +17,33 @@ button_ports = '''
 '''
 #commands and names
 commands_list = '''
-    <option value='help'>Help</option>
+    <option value=''> </option>
+    <option value='ShowHelp'> View Help </option>
     <option value='log'>Log</option>
     <option value='dpp'>Get All players</option>
     <option value='saveworld 0'>Fast Save, only actors</option>
     <option value='BackupDatabase world'>Force Save World to disk</option>
+    <option value='close 30'> Save World And ShutDown </option>
     <option value='shutdown 30'>Shutdown after 30 seconds, use SaveWorld before</option>
     <option value='StopCloseServer'>Stop Shutdown</option>
-
+    <option value=''> </option>
     <option value='QueryInvitationCode'>Get Invitation Code</option>
     <option value='ServerFPS'>Get Server FPS</option>
     <option value='ServerLoginStatus 0'>logging status: Openned</option>
     <option value='ServerLoginStatus 1'>logging status: Close</option>
     <option value='DrawActorImage 0'>Dump the position of the specified type of Actor in the game to the image file: Saved/ACTOR_IMAGE_*.bmp </option>
     <option value='Dump_AllActorPositions'>Export the positions of various Actors in the game to the file: Saved/ACTOR_POSI_DATA.log</option>
-
+    <option value='QueryGridCount'> QueryGridCount </option>
+    <option value='DrawGrids'> draw grids to WS/Saved/GRID_IMAGE_*.PPM </option>
+    <option value=''> </option>
+    <option value='lp'> List Online Players </option>
+    <option value='lap'> List all Players </option>
+    <option value='ls STEAM_ID_or_character_UID'> List owned belonging objects </option>
+    <option value='lg'> List guilds </option>
+    <option value='lgo guild_name_or_guild_UID'> List guilds objects (with one arg: guild's name or guild's uid) </option>
+    <option value='lcc'> List all npc names and class names </option>
+    <option value='lcc Core'> List all npc names and class names (with one string arg [optional], if not empty, results should contains the arg) </option>
+    <option value='lc'> List the game settings (Show_GameXishu) </option>
     <option value='GetAll WS.HPlayerState PlayerName'>Online players Names</option>
     <option value='GetAll WS.HPlayerState UniqueId'>Online players SteamID</option>
     <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
@@ -39,7 +51,22 @@ commands_list = '''
     <option value='GetAll WS.HPlayerState Exp'>Online players Exp</option>
     <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
     <option value='GetAll BP_GameModeBase_C ServerManagerPassword'>Get Admin Password</option>
+    <option value=''> </option>
+    <option value='sc Setting Value'> Set the game coefficient (Set_GameXishu) Example: [sc ExpRatio 5.0] </option>
+    <option value='ssp 4 1'> Enable/Disable list, 0 Account whitelist, 1 Account blocked, 2 IP whitelist, 3 IP blocked, 4 Muted list, [ssp 4 1] Enable Mute list </option>
+    <option value='lsp'> View the server permissions list (List_ServerPermissionList) </option>
+    <option value='Set_OutputChats 1'> Output world/nearby/guild chat to the LOG file (Set 0 to disable) </option>
+    <option value=''> </option>
+    <option value='fly steam_ID 1'>Set the player's fly-mode ON </option>
+    <option value='fly steam_ID 0'>Set the player's fly-mode OFF </option>
+    <option value=''> </option>
+    <option value='gonpc Name_UID_AccountNumber Name_UID_AccountNumber'> Teleport character1 to character2 </option>
+    <option value='go Name_UID_AccountNumber x y z'> Teleport character1 to x y z </option>
+    <option value=''> </option>
+    <option value='cnpc SteamID 0 1'>Create a barbarian (Owner SteamID)(Num 0-3), (0 male, 1 female)</option>
+    <option value='create SteamID Class is_bady level nums quality'>Creates Actor (for list class use lcc)</option>
 '''
+
 
 #not change any more
 html = f"""<html>
