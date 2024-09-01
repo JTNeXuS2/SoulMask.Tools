@@ -1,9 +1,9 @@
+import os
 import base64
 import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import urllib.parse
-from urllib.parse import urlparse, unquote
-import os
+from http.cookies import SimpleCookie
+from urllib.parse import urlparse, unquote, parse_qs
 
 # Port/Username/password for basic web authentication
 webserverport = 80
@@ -74,6 +74,26 @@ commands_list = '''
 '''
 
 #not change any more
+html_auth = '''
+        <!DOCTYPE html>
+        <html lang="ru">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Авторизация</title>
+        </head>
+        <body>
+            <h1>Authentication</h1>
+            <form action="/login" method="post">
+                <label for="username">Login:</label>
+                <input type="text" id="username" name="username" required><br>
+                <label for="password">Pass:</label>
+                <input type="password" id="password" name="password" required><br>
+                <input type="submit" value="Enter">
+            </form>
+        </body>
+        </html>
+        '''
 html = f"""<html>
                 <head>
                     <style>
@@ -150,44 +170,61 @@ html = f"""<html>
                     </script>
                 </body>
             </html>""".encode()
-import os
 
 class WebHandler(BaseHTTPRequestHandler):
-
     def send_telnet_command(self, port, command):
         command = unquote(command)
         send = f"cmd.exe /c echo {command}|plink.exe -telnet 127.0.0.1 -P {port} -raw -batch"
         process = subprocess.Popen(send, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, error = process.communicate()
+        
         if output:
             output_str = output.decode('utf-8')
-            cleaned_text = output_str.replace("Hello:\r\n", "")
-            cleaned_text = cleaned_text.replace("Type help for command list.\r\n", "")
-            return cleaned_text.split('\n')  # split text into lines
+            cleaned_text = output_str.replace("Hello:\r\n", "").replace("Type help for command list.\r\n", "")
+            return cleaned_text.split('\n')
         if error:
-            error = error.decode('utf-8')
-            return [error]
+            return [error.decode('utf-8')]
+        return []
 
     def do_GET(self):
         parsed_path = urlparse(self.path)
-        if parsed_path.path == '/':
-            if not self.check_auth():
-                self.send_auth_headers()
-                return
+        cookies = SimpleCookie(self.headers.get('Cookie', ''))
 
+        # Check cookie
+        is_authenticated = 'authenticated' in cookies and cookies['authenticated'].value == 'true'
+
+        if parsed_path.path == '/':
+            if not is_authenticated:
+                self.send_response(302)
+                self.send_header('Location', '/login')
+                self.end_headers()
+                return
+        
+            # Create Main Page
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-
             self.wfile.write(html)
+            return
+            
+        elif parsed_path.path == '/login':
+            if is_authenticated:
+                # Redirect if auth
+                self.send_response(302)
+                self.send_header('Location', '/')
+                self.end_headers()
+                return
+            self.send_login_form()
             return
 
         elif parsed_path.path == '/send_request':
-            if not self.check_auth():
-                self.send_auth_headers()
+            if not is_authenticated:
+                self.send_response(302)
+                self.send_header('Location', '/login')
+                self.end_headers()
                 return
 
-            query_params = urllib.parse.parse_qs(parsed_path.query)
+            query_params = parse_qs(parsed_path.query)
             command = query_params.get('command', [''])[0]
             port = query_params.get('port', [''])[0]
             response = self.send_telnet_command(int(port), command)
@@ -195,21 +232,18 @@ class WebHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
-            if response is None:
-                self.wfile.write(f"server did not return anything\n".encode())
-                return
             for line in response:
                 self.wfile.write(f"{line}\n".encode())
-
             return
 
         elif parsed_path.path.startswith('/files_list'):
-            if not self.check_auth():
-                self.send_auth_headers()
+            if not is_authenticated:
+                self.send_response(302)
+                self.send_header('Location', '/login')
+                self.end_headers()
                 return
 
-            query_params = urllib.parse.parse_qs(parsed_path.query)
-            directory_name = query_params.get('directory', [''])[0]
+            query_params = parse_qs(parsed_path.query)
             base_path = query_params.get('base_path', [''])[0]
             if os.path.isdir(base_path):
                 files = os.listdir(base_path)
@@ -218,7 +252,6 @@ class WebHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
 
-                # Generate HTML for the list of files in the directory with correct download links
                 files_html = f'<h1>Files in Directory: {base_path}</h1><ul>'
                 for file in files:
                     file_path = os.path.join(base_path, file)
@@ -235,13 +268,14 @@ class WebHandler(BaseHTTPRequestHandler):
                 self.wfile.write(b'Directory not found')
             return
 
-            
         elif parsed_path.path == '/download':
-            if not self.check_auth():
-                self.send_auth_headers()
+            if not is_authenticated:
+                self.send_response(302)
+                self.send_header('Location', '/login')
+                self.end_headers()
                 return
 
-            query_params = urllib.parse.parse_qs(parsed_path.query)
+            query_params = parse_qs(parsed_path.query)
             file_name = query_params.get('file', [''])[0]
             base_path = query_params.get('base_path', [''])[0]
             file_path = os.path.join(base_path, file_name)
@@ -261,20 +295,33 @@ class WebHandler(BaseHTTPRequestHandler):
                 self.wfile.write(b'File not found')
             return
 
-    def check_auth(self):
-        auth_header = self.headers.get('Authorization')
-        if auth_header:
-            encoded_credentials = auth_header.split(' ')[1]
-            credentials = base64.b64decode(encoded_credentials).decode('utf-8')
-            username, password = credentials.split(':')
-            return username == USERNAME and password == PASSWORD
-        return False
+    def do_POST(self):
+        if self.path == '/login':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            form_data = parse_qs(post_data.decode('utf-8'))
+            username = form_data.get('username', [None])[0]
+            password = form_data.get('password', [None])[0]
 
-    def send_auth_headers(self):
-        self.send_response(401)
-        self.send_header('WWW-Authenticate', 'Basic realm="Secure Area"')
+            if username == USERNAME and password == PASSWORD:
+                # Auth Success
+                self.send_response(302)
+                self.send_header('Set-Cookie', 'authenticated=true; Path=/')
+                self.send_header('Location', '/')
+                self.end_headers()
+            else:
+                # Try Again
+                self.send_response(401)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                self.wfile.write(b"<h1>Wrong User Name or Password!</h1> <button onclick=\"window.location.href='/login'\">Try again</button>")
+            return
+
+    def send_login_form(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
         self.end_headers()
-        self.wfile.write(b"Authorization Required")
+        self.wfile.write(html_auth.encode())
 
 def run(server_class=HTTPServer, handler_class=WebHandler, port=webserverport):
     server_address = ('', port)
@@ -282,7 +329,5 @@ def run(server_class=HTTPServer, handler_class=WebHandler, port=webserverport):
     print(f"Starting HTTP server on port {port}")
     httpd.serve_forever()
 
-if __name__ == '__main__':
-    run()
 if __name__ == '__main__':
     run()
