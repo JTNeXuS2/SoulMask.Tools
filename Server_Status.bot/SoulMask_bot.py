@@ -110,12 +110,12 @@ async def update_status():
             update_settings()
             message = (
                 f":earth_africa:Direct Link: **{address[0]}:{info.port}**\n"
-                f":link: Invite: **{rules['SU_s']}**\n"
+                f":link: Invite: **{rules.get('SU_s', 'N/A')}**\n"
                 f":map: Map: **{info.map_name}**\n"
                 f":green_circle: Online: **{info.player_count}/{info.max_players}**\n"
                 f":asterisk: Pass: **{info.password_protected}**\n"
-                f":newspaper: Ver: **{rules['NO_s']}**\n"
-                )
+                f":newspaper: Ver: **{rules.get('NO_s', 'N/A')}**\n"
+            )
             addition_embed = disnake.Embed(
                 title=f"**{info.server_name}**",
                 colour=disnake.Colour.green(),
