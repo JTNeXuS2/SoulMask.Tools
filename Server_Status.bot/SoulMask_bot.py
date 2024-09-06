@@ -73,6 +73,22 @@ async def get_info(address):
         info = a2s.info(address)
         players = a2s.players(address)
         rules = a2s.rules(address)
+        '''
+        # DEBUG
+        print(f'\n=== Server Info ===')
+        info_parts = f'{info}'.split(", ")
+        for part in info_parts:
+            print(f'    {part}')
+
+        print(f'\n=== Players List ===')
+        for player in players:
+            normal_time = datetime.datetime.utcfromtimestamp(player.duration).strftime('%H:%M:%S')
+            print(f"    {player.name}, Time: {normal_time}")
+
+        print(f'\n=== Rules ===')
+        for key, value in rules.items():
+            print(f'    {key}: {value}')
+        '''
         return info, players, rules
     except Exception as e:
         #print(f"An error occurred while getting server info: {e}")
