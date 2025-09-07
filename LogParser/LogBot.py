@@ -1,8 +1,6 @@
 import json
-import configparser
 import unicodedata
 import datetime
-
 import asyncio
 import os
 # Need "pip install requests"
@@ -10,18 +8,20 @@ import requests
 import time
 import re
 import subprocess
+#pip install ipwhois
+#from ipwhois import IPWhois
 
 #from pytonik_ip_vpn_checker.ip import ip
 #Set discord webhook URL
-webhook_url = "https://discord.com/api/webhooks/1246941454870249636/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+webhook_url = "https://discord.com/api/webhooks/1246941454870249636/XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+chat_webhook_url = "https://discord.com/api/webhooks/1414043669052522606/YYYYYYYYYYYYYYYYYYYYYYY"
 
 #Set admins SteamIDs, add custom param to find
-id_list = [
-            'logStoreGamemode: player ready.',
-            'logStoreGamemode: Display: player leave world.',
-            'ASGGameModeLobby',
-            'remote console, exec:'
-            ]
+id_list = ['PostLogin Account: 76561198277462764', 'PostLogin Account: 76561198838209834', 'PostLogin Account: 76561198126416023',
+    'OnLoadPlayerDataComplete AccountId 76561198277462764',
+    'OnLoadPlayerDataComplete AccountId 76561198838209834',
+    'OnLoadPlayerDataComplete AccountId 76561198126416023',
+    'ServerCheat_Implementation', 'logStoreGamemode: player ready.', 'logStoreGamemode: Display: player leave world.', 'ASGGameModeLobby', 'remote console, exec:']
 
 #Set full path to servers logs
 log_files = [
@@ -30,10 +30,8 @@ log_files = [
 
 #Set match the server name and log file
 log_files_dict = {
-    'C:/wgsm/servers/1/serverfiles/WS/Saved/Logs/WS.log': '**PVE-K**'
+    'C:/wgsm/servers/1/serverfiles/WS/Saved/Logs/WS.log': ' PVE'
 }
-
-#Nothing change more
 
 missing_files = []
 for log_file in log_files:
@@ -62,6 +60,7 @@ async def send_discord_webhook(webhook_url, message):
     except Exception as e:
         print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Error sending Discord webhook: {e}")
 
+
 last_lines = {os.path.basename(log_file): None for log_file in log_files}
 async def process_log_file(log_file):
     log_lines = await read_log_file(log_file)
@@ -71,6 +70,15 @@ async def process_log_file(log_file):
         if last_lines[log_filename] is not None:
             new_lines = log_lines[last_lines[log_filename] or 0:]
             for line in new_lines:
+                if "logWorldChat: Display:" in line:
+                    #print(f"ChatLine: {line}")
+                    if (match := re.search(r"logWorldChat: Display: \[\s*([^,]+)\s*,\s*([^()]+)\s*\(\s*(\d+)\s*\)\s*\]\s*(.+)", line)):
+                        clan = match.group(1).strip()
+                        name = match.group(2).strip()
+                        id_ = match.group(3)
+                        message = match.group(4).strip()
+                        await send_discord_webhook(chat_webhook_url, f"**{name}**:{message}")
+
                 if any(id in line for id in id_list):
                     if re.match(r'\[\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2}:\d{3}\]\[\s*\d+\]', line):
                         server_name = log_files_dict.get(log_file, "Unknown Server")
@@ -86,7 +94,7 @@ async def main():
     while True:
         tasks = [process_log_file(log_file) for log_file in log_files]
         await asyncio.gather(*tasks)
-        await asyncio.sleep(10)  # Проверка каждые 10 секунд
+        await asyncio.sleep(5)  # Проверка каждые 10 секунд
         #print('CheckLogs')
 
 asyncio.run(main())
