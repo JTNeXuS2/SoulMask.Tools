@@ -8,7 +8,7 @@ from urllib.parse import urlparse, unquote, parse_qs
 # Port/Username/password for basic web authentication
 webserverport = 8080
 USERNAME = "USERNAME"
-PASSWORD = "PASSWORD"
+PASSWORD = "PASS WORD"
 #buttons ports/names for connect to 127.0.0.1, add more if u have more servers
 button_ports = '''
     <button onclick=\"sendCommand(20779)\">Send PVE</button>
