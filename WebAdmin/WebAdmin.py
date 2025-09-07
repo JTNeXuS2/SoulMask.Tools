@@ -6,14 +6,19 @@ from http.cookies import SimpleCookie
 from urllib.parse import urlparse, unquote, parse_qs
 
 # Port/Username/password for basic web authentication
-webserverport = 80
+webserverport = 8080
 USERNAME = "admin"
-PASSWORD = "123456"
-#buttons EchoPorts/names for connect to 127.0.0.1, add more if u have more servers
+PASSWORD = "2412208"
+#buttons ports/names for connect to 127.0.0.1, add more if u have more servers
 button_ports = '''
     <button onclick=\"sendCommand(20779)\">Send PVE</button>
-    <button onclick=\"sendCommand(20712)\">Send PVP</button>
-    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/2/serverfiles/WS/Saved')\">Files PVPX5</button>
+    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/1/serverfiles/WS/Saved')\">Files PVE</button>
+
+    <button onclick=\"sendCommand(20712)\">Send PVPx3</button>
+    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/2/serverfiles/WS/Saved')\">Files PVPx3</button>
+    
+    <button onclick=\"sendCommand(20702)\">Send TEST</button>
+
 '''
 #commands and names
 commands_list = '''
@@ -72,6 +77,7 @@ commands_list = '''
     <option value='Set_OutputChats 1'> Enable/Disable Chat Output world/nearby/guild to the LOG file (Set 0 to disable) </option>
     <option value=''> </option>
 '''
+
 
 #not change any more
 html_auth = '''
@@ -172,11 +178,20 @@ html = f"""<html>
             </html>""".encode()
 
 class WebHandler(BaseHTTPRequestHandler):
+    def setup(self):
+        super().setup()
+        self.connection.settimeout(30)  # например, 30 секунд
+
     def send_telnet_command(self, port, command):
         command = unquote(command)
         send = f"cmd.exe /c echo {command}|plink.exe -telnet 127.0.0.1 -P {port} -raw -batch"
         process = subprocess.Popen(send, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = process.communicate()
+        try:
+            output, error = process.communicate(timeout=10)  # 10 секунд таймаут
+        except subprocess.TimeoutExpired:
+            process.kill()
+            output, error = process.communicate()
+            return ["Error: plink command timed out."]
         
         if output:
             output_str = output.decode('utf-8')
@@ -324,10 +339,24 @@ class WebHandler(BaseHTTPRequestHandler):
         self.wfile.write(html_auth.encode())
 
 def run(server_class=HTTPServer, handler_class=WebHandler, port=webserverport):
-    server_address = ('', port)
-    httpd = server_class(server_address, handler_class)
-    print(f"Starting HTTP server on port {port}")
-    httpd.serve_forever()
+    while True:
+        try:
+            server_address = ('', port)
+            httpd = server_class(server_address, handler_class)
+            print(f"Starting HTTP server on port {port}")
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print('Stopping server by user request...')
+            break  # Выход из цикла и завершение программы
+        except Exception as e:
+            print(f"Server error: {e}. Restarting in 5 seconds...")
+            time.sleep(5)
+
 
 if __name__ == '__main__':
-    run()
+    try:
+        run()
+    except Exception as e:
+        print(f"Error: {e}")
+    except KeyboardInterrupt:
+        print('Stoping...')
