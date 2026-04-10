@@ -1,5 +1,5 @@
 @echo off
-title "SoulMask LogBot 1"
+title "SoulMask_bot %cd%"
 mode con:cols=70 lines=7
 
 :start
