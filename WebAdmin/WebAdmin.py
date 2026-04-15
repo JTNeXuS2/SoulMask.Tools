@@ -1,6 +1,7 @@
 import os
 import base64
 import subprocess
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse, unquote, parse_qs
@@ -8,20 +9,25 @@ from urllib.parse import urlparse, unquote, parse_qs
 # Port/Username/password for basic web authentication
 webserverport = 8080
 USERNAME = "admin"
-PASSWORD = "PASS WORD"
+PASSWORD = "WEB_PASSWORD"
 #buttons ports/names for connect to 127.0.0.1, add more if u have more servers
 button_ports = '''
-    <button onclick=\"sendCommand(20779)\">Send PVE</button>
-    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/1/serverfiles/WS/Saved')\">Files PVE</button>
+    <button onclick=\"sendCommand(810)\">Send PVP</button>
+    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/1/serverfiles/WS/Saved')\">Files PVP</button>
 
-    <button onclick=\"sendCommand(20712)\">Send PVPx3</button>
-    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/2/serverfiles/WS/Saved')\">Files PVPx3</button>
-    
+    <button onclick=\"sendCommand(779)\">Send PVE</button>
+    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/9/serverfiles/WS/Saved')\">Files PVE</button>
+
+    <button onclick=\"sendCommand(833)\">Send PVE_DLC</button>
+    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/10/serverfiles/WS/Saved')\">Files PVE_DLC</button>
+
     <button onclick=\"sendCommand(20702)\">Send TEST</button>
 
 '''
 #commands and names
 commands_list = '''
+    <option value=''> </option>
+    <option value='ListPlayers'>Table List Players</option>
     <option value=''> </option>
     <option value='ShowHelp'> View Help </option>
     <option value='log'>Log</option>
@@ -45,8 +51,16 @@ commands_list = '''
     <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
     <option value='GetAll WS.HPlayerState TotalKeJiPoints'>Online players TotalKeJiPoints</option>
     <option value='GetAll WS.HPlayerState Exp'>Online players Exp</option>
-    <option value='GetAll WS.HPlayerState Level'>Online players Level</option>
     <option value='GetAll BP_GameModeBase_C ServerManagerPassword'>Get Admin Password</option>
+    <option value=''> </option>
+
+    <option value='ssp 1 1'>Enable Ban List</option>
+    <option value='usp 1 1 STEAM_ID'>Ban Player</option>
+    <option value='usp 1 0 STEAM_ID'>UnBan Player</option>
+
+    <option value='ssp 4 1'>Enable Mute List</option>
+    <option value='usp 4 1 STEAM_ID'>Mute Player</option>
+    <option value='usp 4 0 STEAM_ID'>UnMute Player</option>
     <option value=''> </option>
 
     <option value='cnpc SteamID 2 1'>Create Template barbarian (Owner SteamID)(Num 0-999), (0 male, 1 female)</option>
@@ -102,6 +116,7 @@ html_auth = '''
         '''
 html = f"""<html>
                 <head>
+                    <meta charset="UTF-8">
                     <style>
                         table {{
                             font-family: Arial, sans-serif;
@@ -127,6 +142,40 @@ html = f"""<html>
                             border: none;
                             cursor: pointer;
                         }}
+                        
+                        /* Стили для индикатора загрузки */
+                        .loader {{
+                            display: inline-block;
+                            width: 20px;
+                            height: 20px;
+                            border: 3px solid #f3f3f3;
+                            border-top: 3px solid #3498db;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                            margin-left: 10px;
+                        }}
+                        
+                        @keyframes spin {{
+                            0% {{ transform: rotate(0deg); }}
+                            100% {{ transform: rotate(360deg); }}
+                        }}
+                        
+                        .loading-text {{
+                            color: #666;
+                            font-style: italic;
+                            margin: 10px 0;
+                            padding: 10px;
+                            background-color: #f0f0f0;
+                            border-radius: 5px;
+                        }}
+                        
+                        .response-container {{
+                            margin-top: 20px;
+                            padding: 10px;
+                            border: 1px solid #ddd;
+                            border-radius: 5px;
+                            background-color: #f9f9f9;
+                        }}
                     </style>
                 </head>
                 <body>
@@ -141,7 +190,11 @@ html = f"""<html>
                     <p>
                         {button_ports}
                     </p>
-                    <div>
+                    <div class="response-container">
+                        <div id="loadingIndicator" style="display: none;">
+                            <span class="loading-text">⏳ Выполняется команда, пожалуйста, подождите...</span>
+                            <div class="loader"></div>
+                        </div>
                         <pre id='file_list'></pre>
                         <pre id='response'></pre>
                     </div>
@@ -152,30 +205,71 @@ html = f"""<html>
                             document.getElementById('command').value = selectedCommand;
                         }}
 
-                        function sendCommand(port) {{
+                        function showLoading() {{
+                            document.getElementById('loadingIndicator').style.display = 'block';
+                            document.getElementById('response').innerHTML = '';
+                            document.getElementById('file_list').innerHTML = '';
+                        }}
+
+                        function hideLoading() {{
+                            document.getElementById('loadingIndicator').style.display = 'none';
+                        }}
+
+                        async function sendCommand(port) {{
                             var command = document.getElementById('command').value;
-                            fetch('/send_request?command=' + command + '&port=' + port).then(response => response.text()).then(data => {{
-                                var lines = data.split('\\n');
-                                var formattedText = '';
-                                lines.forEach(line => formattedText += line + '\\n');
-                                document.getElementById('response').innerText = formattedText;
-                                document.getElementById('file_list').innerText = '';
-                            }});
+                            
+                            if (!command.trim()) {{
+                                alert('Пожалуйста, введите команду');
+                                return;
+                            }}
+                            
+                            showLoading();
+                            
+                            try {{
+                                // Для ListPlayers используем специальную обработку
+                                if (command === 'ListPlayers') {{
+                                    const response = await fetch('/send_request?command=' + command + '&port=' + port);
+                                    const data = await response.text();
+                                    hideLoading();
+                                    document.getElementById('response').innerHTML = data;
+                                    document.getElementById('file_list').innerHTML = '';
+                                }} else {{
+                                    const response = await fetch('/send_request?command=' + command + '&port=' + port);
+                                    const data = await response.text();
+                                    hideLoading();
+                                    var lines = data.split('\\n');
+                                    var formattedText = '';
+                                    lines.forEach(line => formattedText += line + '\\n');
+                                    document.getElementById('response').innerText = formattedText;
+                                    document.getElementById('file_list').innerHTML = '';
+                                }}
+                            }} catch (error) {{
+                                hideLoading();
+                                document.getElementById('response').innerHTML = '<span style="color: red;">❌ Ошибка: ' + error.message + '</span>';
+                            }}
                         }}
                         
-                        function sendbase_path(base_path) {{
-                            fetch('/files_list?base_path=' + base_path).then(response => response.text()).then(data => {{
+                        async function sendbase_path(base_path) {{
+                            showLoading();
+                            
+                            try {{
+                                const response = await fetch('/files_list?base_path=' + base_path);
+                                const data = await response.text();
+                                hideLoading();
                                 var lines = data.split('\\n');
                                 var formattedText = '';
                                 lines.forEach(line => formattedText += line + '\\n');
-                                document.getElementById('response').innerText = '';
+                                document.getElementById('response').innerHTML = '';
                                 document.getElementById('file_list').innerHTML = formattedText;
-                            }});
+                            }} catch (error) {{
+                                hideLoading();
+                                document.getElementById('file_list').innerHTML = '<span style="color: red;">❌ Ошибка: ' + error.message + '</span>';
+                            }}
                         }}
                         
                     </script>
                 </body>
-            </html>""".encode()
+            </html>"""
 
 class WebHandler(BaseHTTPRequestHandler):
     def setup(self):
@@ -194,12 +288,110 @@ class WebHandler(BaseHTTPRequestHandler):
             return ["Error: plink command timed out."]
         
         if output:
-            output_str = output.decode('utf-8')
+            output_str = output.decode('utf-8', errors='replace')
             cleaned_text = output_str.replace("Hello:\r\n", "").replace("Type help for command list.\r\n", "")
             return cleaned_text.split('\n')
         if error:
-            return [error.decode('utf-8')]
+            return [error.decode('utf-8', errors='replace')]
         return []
+
+    def get_players_list(self, port):
+        """Получает и сопоставляет данные игроков с сервера"""
+        # Получаем UniqueId (Steam ID)
+        response_id = self.send_telnet_command(port, "GetAll WS.HPlayerState UniqueId")
+        # Получаем PlayerName
+        response_name = self.send_telnet_command(port, "GetAll WS.HPlayerState PlayerName")
+        # Получаем Level
+        response_level = self.send_telnet_command(port, "GetAll WS.HPlayerState Level")
+        
+        players = {}
+        
+        # Парсим UniqueId
+        for line in response_id:
+            # Ищем паттерн: HPlayerState_123456789.UniqueId = 76561198206843371
+            if 'HPlayerState_' in line and '.UniqueId =' in line:
+                try:
+                    # Извлекаем ID (число между HPlayerState_ и .UniqueId)
+                    id_part = line.split('HPlayerState_')[1].split('.UniqueId')[0]
+                    # Извлекаем Steam ID
+                    steam_id = line.split('= ')[1].strip()
+                    players[id_part] = {'ID': id_part, 'SteamID': steam_id, 'PlayerName': '', 'Level': ''}
+                except:
+                    pass
+        
+        # Парсим PlayerName
+        for line in response_name:
+            if 'HPlayerState_' in line and '.PlayerName =' in line:
+                try:
+                    id_part = line.split('HPlayerState_')[1].split('.PlayerName')[0]
+                    name = line.split('= ')[1].strip()
+                    if id_part in players:
+                        players[id_part]['PlayerName'] = name
+                except:
+                    pass
+        
+        # Парсим Level
+        for line in response_level:
+            if 'HPlayerState_' in line and '.Level =' in line:
+                try:
+                    id_part = line.split('HPlayerState_')[1].split('.Level')[0]
+                    level = line.split('= ')[1].strip()
+                    if id_part in players:
+                        players[id_part]['Level'] = level
+                except:
+                    pass
+        
+        return players
+
+    def format_players_table(self, players):
+        """Форматирует список игроков в HTML таблицу"""
+        if not players:
+            return "<p>📭 Нет игроков онлайн</p>"
+        
+        html_table = """
+        <style>
+            .players-table {
+                font-family: Arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+                margin-top: 20px;
+            }
+            .players-table th, .players-table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+            .players-table th {
+                background-color: #4CAF50;
+                color: white;
+            }
+            .players-table tr:nth-child(even) {
+                background-color: #f2f2f2;
+            }
+        </style>
+        <h2>📊 List Online players</h2>
+        <table class="players-table">
+            <tr>
+                <th>ID</th>
+                <th>Steam ID</th>
+                <th>Player Name</th>
+                <th>Level</th>
+            </tr>
+        """
+        
+        for player_id, data in players.items():
+            if data.get('PlayerName'):  # Показываем только игроков с именем (онлайн)
+                html_table += f"""
+                <tr>
+                    <td>{data.get('ID', '')}</td>
+                    <td>{data.get('SteamID', '')}</td>
+                    <td>{data.get('PlayerName', '')}</td>
+                    <td>{data.get('Level', '')}</td>
+                </tr>
+                """
+        
+        html_table += "</table>"
+        return html_table
 
     def do_GET(self):
         parsed_path = urlparse(self.path)
@@ -217,9 +409,9 @@ class WebHandler(BaseHTTPRequestHandler):
         
             # Create Main Page
             self.send_response(200)
-            self.send_header('Content-type', 'text/html')
+            self.send_header('Content-type', 'text/html; charset=utf-8')
             self.end_headers()
-            self.wfile.write(html)
+            self.wfile.write(html.encode('utf-8'))
             return
             
         elif parsed_path.path == '/login':
@@ -242,13 +434,25 @@ class WebHandler(BaseHTTPRequestHandler):
             query_params = parse_qs(parsed_path.query)
             command = query_params.get('command', [''])[0]
             port = query_params.get('port', [''])[0]
+            
+            # Новая обработка для ListPlayers
+            if command == 'ListPlayers':
+                players = self.get_players_list(int(port))
+                response_html = self.format_players_table(players)
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(response_html.encode('utf-8'))
+                return
+            
+            # Старая обработка для остальных команд
             response = self.send_telnet_command(int(port), command)
 
             self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
+            self.send_header('Content-type', 'text/plain; charset=utf-8')
             self.end_headers()
             for line in response:
-                self.wfile.write(f"{line}\n".encode())
+                self.wfile.write(f"{line}\n".encode('utf-8'))
             return
 
         elif parsed_path.path.startswith('/files_list'):
@@ -264,7 +468,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 files = os.listdir(base_path)
 
                 self.send_response(200)
-                self.send_header('Content-type', 'text/html')
+                self.send_header('Content-type', 'text/html; charset=utf-8')
                 self.end_headers()
 
                 files_html = f'<h1>Files in Directory: {base_path}</h1><ul>'
@@ -275,10 +479,10 @@ class WebHandler(BaseHTTPRequestHandler):
                         files_html += f'<li>{file_link}</li>'
                 files_html += '</ul>'
 
-                self.wfile.write(files_html.encode())
+                self.wfile.write(files_html.encode('utf-8'))
             else:
                 self.send_response(404)
-                self.send_header('Content-Type', 'text/plain')
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
                 self.end_headers()
                 self.wfile.write(b'Directory not found')
             return
@@ -305,7 +509,7 @@ class WebHandler(BaseHTTPRequestHandler):
                     self.wfile.write(file.read())
             else:
                 self.send_response(404)
-                self.send_header('Content-Type', 'text/plain')
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
                 self.end_headers()
                 self.wfile.write(b'File not found')
             return
@@ -327,16 +531,16 @@ class WebHandler(BaseHTTPRequestHandler):
             else:
                 # Try Again
                 self.send_response(401)
-                self.send_header('Content-type', 'text/html')
+                self.send_header('Content-type', 'text/html; charset=utf-8')
                 self.end_headers()
                 self.wfile.write(b"<h1>Wrong User Name or Password!</h1> <button onclick=\"window.location.href='/login'\">Try again</button>")
             return
 
     def send_login_form(self):
         self.send_response(200)
-        self.send_header('Content-type', 'text/html')
+        self.send_header('Content-type', 'text/html; charset=utf-8')
         self.end_headers()
-        self.wfile.write(html_auth.encode())
+        self.wfile.write(html_auth.encode('utf-8'))
 
 def run(server_class=HTTPServer, handler_class=WebHandler, port=webserverport):
     while True:
