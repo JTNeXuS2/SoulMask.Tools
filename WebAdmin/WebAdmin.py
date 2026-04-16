@@ -14,14 +14,17 @@ PASSWORD = "WEB_PASSWORD"
 button_ports = '''
     <button onclick=\"sendCommand(810)\">Send PVP</button>
     <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/1/serverfiles/WS/Saved')\">Files PVP</button>
-
+    
+    <button onclick=\"sendCommand(843)\">Send PVPx10</button>
+    <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/3/serverfiles/WS/Saved')\">Files PVPx10</button>
+    
     <button onclick=\"sendCommand(779)\">Send PVE</button>
     <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/9/serverfiles/WS/Saved')\">Files PVE</button>
 
     <button onclick=\"sendCommand(833)\">Send PVE_DLC</button>
     <button style="background-color: #303090;" onclick=\"sendbase_path('C:/wgsm/servers/10/serverfiles/WS/Saved')\">Files PVE_DLC</button>
 
-    <button onclick=\"sendCommand(20702)\">Send TEST</button>
+    <button onclick=\"sendCommand(820)\">Send TEST</button>
 
 '''
 #commands and names
@@ -67,6 +70,16 @@ commands_list = '''
     <option value='create SteamID Class is_bady level nums quality'>Creates Actor (for list class use lcc)</option>
     <option value='create SteamID /Game/Blueprints/AI/Ren/BP_BuLuo_Base.BP_BuLuo_Base_C 0 60 1 5'>Creates Thrall (for list class use lcc)</option>
     <option value='create SteamID /Game/Blueprints/DongWu/BP_DongWu_BaoZi.BP_DongWu_BaoZi_C 0 60 1 5'>Creates Jaguar (for list class use lcc)</option>
+    <option value=''> </option>
+
+    <option value='DestroyAll blueprint_path'> Delete All obj(actors) from map</option>
+    <option value='DestroyAll /Game/Blueprints/JianZhu/FengChe/BP_JianZhu_ConveyorPillar_1.BP_JianZhu_ConveyorPillar_1_C'> Delete All Conveyor_Pillar</option>
+    <option value='DestroyAll /Game/Blueprints/JianZhu/FengChe/BP_FengChe_Conveyor_Box.BP_FengChe_Conveyor_Box_C'> Delete All Conveyor_Box</option>
+    <option value='DestroyAll /Game/Blueprints/JianZhu/FengChe/BP_FengChe_Conveyor.BP_FengChe_Conveyor_C'> Delete All Conveyor</option>
+    <option value='DestroyAll /Game/Blueprints/JianZhu/KuangMai/BP_JianZhu_DongLiKuangChang.BP_JianZhu_DongLiKuangChang_C'> Delete All AutoMiners</option>
+    <option value=''> </option>
+
+    <option value='run a.txt'> ExecScriptCommands Script.txt</option>
     <option value=''> </option>
 
     <option value='gonpc Name_UID_AccountNumber Name_UID_AccountNumber'> Teleport character1 to character2 </option>
