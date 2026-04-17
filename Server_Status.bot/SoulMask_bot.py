@@ -64,7 +64,7 @@ def update_settings():
             RCONPORT = int(config['botconfig']['RCONPORT'])
             PASSWORD = config['botconfig']['PASSWORD']
             crosschat_id = config['botconfig']['crosschat_id']
-
+            annonce_time = int(config['botconfig']['annonce_time'])
         except KeyError as e:
             print(f"Error: wrong lines in config file {e}")
 
@@ -76,6 +76,7 @@ bot_ava = None
 update_time = 10
 address = None
 command_prefex = None
+annonce_time = 900
 update_settings()
 
 #bot idents
@@ -160,7 +161,6 @@ def gettime(format):
     return datetime.datetime.now().strftime(format)
 current_index = 0
 useonce = None
-annonce_time = 600
 annonce_file = 'annonces.txt'
 if not os.path.exists(annonce_file):
     with open(annonce_file, 'w', encoding='utf-8') as f:
@@ -390,6 +390,16 @@ async def players(ctx: disnake.ApplicationCommandInteraction, ip: str = None, qu
 
     lists = []
     print(f'\n=== Players List ===')
+    if not players:
+        await ctx.response.defer(ephemeral=True)
+        empty_embed = disnake.Embed(
+            title=f"Players List",
+            description="🎮 **No players online**",
+            colour=disnake.Colour.blurple()
+        )
+        empty_embed.add_field(name=f"Online	**0/{info.max_players}**", value="There are currently no players on the server.", inline=False)
+        await ctx.send(embed=empty_embed, ephemeral=True)
+        return
     for i, player in enumerate(players):
         normal_time = datetime.datetime.utcfromtimestamp(player.duration).strftime('%H:%M:%S')
         print(f"    {player.name}, Time: {normal_time}")
@@ -409,7 +419,6 @@ async def players(ctx: disnake.ApplicationCommandInteraction, ip: str = None, qu
         return chunks
 
     player_chunks = chunk_list(lists, 1020)
-
     for i, chunk in enumerate(player_chunks):
         addition_embed = disnake.Embed(
             title=f"Players List {i+1}\nOnline	**{info.player_count}/{info.max_players}**",
